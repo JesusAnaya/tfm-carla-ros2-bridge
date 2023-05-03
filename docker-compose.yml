@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Carla ROS bridge container
+  bridge:
+    build:
+      context: ./docker/carla_ros2_bridge/
+      dockerfile: Dockerfile
+    image: carla-ros2-bridge:latest
+    container_name: carla_ros_bridge
+    command: ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py host:=192.168.1.71 timeout:=5
+    restart: always
+
+  data_collector:
+    build:
+      context: .
+      dockerfile: docker/tfm_carla_data_collector/Dockerfile
+    image: tfm_carla_data_collector:latest
+    container_name: data_collector
+    command: ros2 run tfm_carla_data_collector data_collector
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      bridge:
+        condition: service_started
+
+  # foxglove to visualize live data 
+  foxglove_bridge:
+    build:
+      context: ./docker/foxglove_bridge/
+      dockerfile: Dockerfile
+
+    image: foxglove-bridge:latest
+    ports:
+      - 8765:8765
+    container_name: foxglove_bridge
+    command: ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765
+    restart: always
+    depends_on:
+      bridge:
+        condition: service_started
+      data_collector:
+        condition: service_started
+
+networks:
+  hostnet:
+    external: true
