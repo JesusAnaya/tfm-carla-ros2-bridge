@@ -1,6 +1,0 @@
-# tfm_carla_data_collector/srv/SetDataCollection.srv
-
-bool collect_data
----
-bool success
-string message

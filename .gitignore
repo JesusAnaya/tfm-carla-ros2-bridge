@@ -16,14 +16,14 @@ lib64/
 parts/
 sdist/
 var/
-src/install
-src/output
-src/build
-src/log
+install/
+build/
+log/
 src/tfm_carla_data_collector/resource/tfm_carla_data_collector
 *.egg-info/
 .installed.cfg
 *.egg
+.env
 
 # Installer logs
 pip-log.txt
