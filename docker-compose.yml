@@ -8,7 +8,7 @@ services:
       dockerfile: ./docker/custom_carla_bridge/Dockerfile
     image: custom-carla-bridge:latest
     container_name: custom-carla-bridge
-    command: ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=192.168.1.73 town:=Town07_Opt
+    command: ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=192.168.1.73 town:=Town01
     volumes:
       - ./:/ros2_ws
     restart: always

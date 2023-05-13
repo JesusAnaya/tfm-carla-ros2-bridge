@@ -2,8 +2,11 @@ import rclpy
 import cv2
 import carla
 import numpy as np
+import random
+import signal
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
+from rclpy.executors import SingleThreadedExecutor
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
 from custom_interfaces.msg import VehicleControl
@@ -18,7 +21,7 @@ class CarlaROSNode(Node):
         self.camera = None
         self.client = None
 
-        self.bridge = CvBridge()
+        self.cv_bridge = CvBridge()
 
         # Parameters
         self.declare_parameter('host', 'localhost')
@@ -45,8 +48,14 @@ class CarlaROSNode(Node):
             10
         )
 
+        # Shutdown callback
+        signal.signal(signal.SIGINT, self.shutdown_callback)
+
         # Connect to the Carla simulator
         self.connect_to_carla()
+
+        self.timer_period = 0.05  # desired simulation rate in seconds (e.g., 0.05 s for 20 Hz)
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
     def connect_to_carla(self) -> None:
         # Connect to the Carla simulator
@@ -55,12 +64,32 @@ class CarlaROSNode(Node):
 
         # Load the town
         self.world = self.client.load_world(self.town)
+        settings = self.world.get_settings()
+        settings.synchronous_mode = True
+        settings.fixed_delta_seconds = 0.05
+        self.world.apply_settings(settings)
+        self.world.tick()
 
-        # Spawn the Tesla ego vehicle
+        # Get the current weather parameters
+        weather = self.world.get_weather()
+
+        # Set the desired parameters
+        weather.cloudiness = 0.0
+        weather.precipitation = 0.0
+        weather.fog_density = 0.0
+        weather.sun_altitude_angle = 10.0
+
+        # Apply the new weather parameters
+        self.world.set_weather(weather)
+
+        # Load the Tesla model
         blueprint_library = self.world.get_blueprint_library()
         tesla_blueprint = blueprint_library.find('vehicle.tesla.model3')
-        spawn_points = self.world.get_map().get_spawn_points()
-        self.ego_vehicle = self.world.spawn_actor(tesla_blueprint, spawn_points[0])
+
+        # Spawn the Tesla at a random spawn point
+        spawn_point = random.choice(self.world.get_map().get_spawn_points())
+        self.ego_vehicle = self.world.try_spawn_actor(tesla_blueprint, spawn_point)
+        self.world.tick()
 
         # Attach an RGB camera to the Tesla
         camera_bp = blueprint_library.find('sensor.camera.rgb')
@@ -74,13 +103,16 @@ class CarlaROSNode(Node):
         # Register the image callback
         self.camera.listen(lambda image: self.process_image(image))
 
+    def timer_callback(self):
+        self.world.tick()
+
     def process_image(self, carla_image: carla.Image) -> None:
         # Convert the CARLA image from BGRA to RGB format
         bgra_image = np.array(carla_image.raw_data).reshape((carla_image.height, carla_image.width, 4))
         rgb_image = bgra_image[:, :, :3][:, :, ::-1]
 
         # Convert the OpenCV image to a ROS Image message
-        image_msg = self.bridge.cv2_to_imgmsg(rgb_image, encoding='rgb8')
+        image_msg = self.cv_bridge.cv2_to_imgmsg(rgb_image, encoding='rgb8')
 
         self.image_pub.publish(image_msg)
 
@@ -96,12 +128,30 @@ class CarlaROSNode(Node):
         )
         self.ego_vehicle.apply_control(control)
 
+    def shutdown_callback(self) -> None:
+        # Cleanup the Carla ROS node
+        self.camera.destroy()
+        self.ego_vehicle.destroy()
+
+        settings = self.world.get_settings()
+        settings.synchronous_mode = False
+        self.world.apply_settings(settings)
+
 
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = CarlaROSNode()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
+
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        executor.shutdown()
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
