@@ -1,18 +1,18 @@
 import carla
 import random
-from typing import Any, Callable
+from typing import Union, Any, Callable
 
 
 class CarlaConnector(object):
     def __init__(self, host: str, town: str) -> None:
         self.host = host
         self.town = town
-        self.world: [carla.World, None] = None
-        self.ego_vehicle: [carla.Vehicle, None] = None
-        self.camera_center: [carla.Sensor, None] = None
-        self.camera_left: [carla.Sensor, None] = None
-        self.camera_right: [carla.Sensor, None] = None
-        self.client: [carla.Client, None] = None
+        self.world: Union[carla.World, None] = None
+        self.ego_vehicle: Union[carla.Vehicle, None] = None
+        self.camera_center: Union[carla.Sensor, None] = None
+        self.camera_left: Union[carla.Sensor, None] = None
+        self.camera_right: Union[carla.Sensor, None] = None
+        self.client: Union[carla.Client, None] = None
         self.camera_deviation: float = 0.4
 
     def connect_to_carla(self) -> None:

@@ -74,6 +74,7 @@ class CarlaROSNode(Node):
         self.timer: Any = self.create_timer(
             self.timer_period, self.carla_connector.timer_callback
         )
+        self.get_logger().info("Node ROS Bridge to Carla started...")
 
     def set_publishers(self):
         self.camera_center_publisher = self.create_publisher(
