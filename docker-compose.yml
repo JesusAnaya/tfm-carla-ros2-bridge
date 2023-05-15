@@ -1,17 +1,26 @@
 version: '3.8'
 
 services:
-  # Carla ROS bridge container
-  custom_carla_bridge:
+  # Carla Server
+  carla_server:
     build:
       context: .
-      dockerfile: ./docker/custom_carla_bridge/Dockerfile
-    image: custom-carla-bridge:latest
-    container_name: custom-carla-bridge
-    command: ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=192.168.1.73 town:=Town01
+      dockerfile: ./docker/carla_server/Dockerfile
+    image: carla-server:0.9.14
+    container_name: carla_server
+    command: ["bash", "./CarlaUE4.sh", "-vulkan", "-nosound", "-RenderOffScreen"]
+    runtime: nvidia
+    environment:
+      - DISPLAY=${DISPLAY}
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - QT_X11_NO_MITSHM=1 # Fix a bug with QT
+      - SDL_VIDEODRIVER=x11
     volumes:
-      - ./:/ros2_ws
-    restart: always
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    privileged: true
+    networks:
+      - carla_net
 
   # foxglove to visualize live data 
   foxglove_bridge:
@@ -20,15 +29,32 @@ services:
       dockerfile: ./docker/foxglove_bridge/Dockerfile
 
     image: foxglove-bridge:latest
-    ports:
-      - 8765:8765
     container_name: foxglove_bridge
     command: ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765
-    restart: always
+    ports: 
+      - 8765:8765
+    networks:
+      - carla_net
     depends_on:
-      custom_carla_bridge:
+      carla_server:
+        condition: service_started
+    
+
+  # Carla ROS bridge container
+  custom_carla_bridge:
+    build:
+      context: .
+      dockerfile: ./docker/custom_carla_bridge/Dockerfile
+    image: custom-carla-bridge:latest
+    container_name: custom-carla-bridge
+    command: /bin/sh -c "sleep 20 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town10HD"
+    volumes:
+      - ./:/ros2_ws
+    networks:
+      - carla_net
+    depends_on:
+      carla_server:
         condition: service_started
 
 networks:
-  hostnet:
-    external: true
+  carla_net:
