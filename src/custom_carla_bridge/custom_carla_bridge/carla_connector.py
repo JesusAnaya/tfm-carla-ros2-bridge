@@ -68,8 +68,8 @@ class CarlaConnector(object):
     def init_cameras(self, blueprint_library: Any) -> None:
         # Attach an RGB camera to the Tesla
         camera_bp = blueprint_library.find("sensor.camera.rgb")
-        camera_bp.set_attribute("image_size_x", "800")
-        camera_bp.set_attribute("image_size_y", "600")
+        camera_bp.set_attribute("image_size_x", "640")
+        camera_bp.set_attribute("image_size_y", "480")
         camera_bp.set_attribute("fov", "90")
 
         # Get Vehicle Physics Control

@@ -8,7 +8,7 @@ services:
       dockerfile: ./docker/carla_server/Dockerfile
     image: carla-server:0.9.14
     container_name: carla_server
-    command: ["bash", "./CarlaUE4.sh", "-vulkan", "-nosound", "-RenderOffScreen"]
+    command: ["bash", "./CarlaUE4.sh", "-vulkan", "-nosound", "-RenderOffScreen", "-fps=30"]
     runtime: nvidia
     environment:
       - DISPLAY=${DISPLAY}
@@ -47,7 +47,7 @@ services:
       dockerfile: ./docker/custom_carla_bridge/Dockerfile
     image: custom-carla-bridge:latest
     container_name: custom-carla-bridge
-    command: /bin/sh -c "sleep 20 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town10HD"
+    command: /bin/sh -c "sleep 20 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town01"
     volumes:
       - ./:/ros2_ws
     networks:
