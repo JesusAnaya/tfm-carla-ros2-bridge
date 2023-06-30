@@ -83,8 +83,14 @@ services:
     command: /bin/sh -c "sleep 15 && ros2 launch vehicle_inference vehicle_inference.launch.py"
     volumes:
       - ./models:/models
+      - /tmp/.X11-unix:/tmp/.X11-unix
     networks:
       - carla_net
+    runtime: nvidia
+    privileged: true
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
     depends_on:
       carla_server:
         condition: service_started

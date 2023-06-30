@@ -136,7 +136,7 @@ class VehicleInferenceNode(Node):
         # Use the current state of the vehicle control and update only the steer value
         self.current_vehicle_control.steer = self.filter.get_average()
 
-        self.get_logger().info(f'Applying control: {self.current_vehicle_control.steer}')
+        #self.get_logger().info(f'Applying control: {self.current_vehicle_control.steer}')
 
         # Publish the control command
         self.control_publisher.publish(self.current_vehicle_control)
