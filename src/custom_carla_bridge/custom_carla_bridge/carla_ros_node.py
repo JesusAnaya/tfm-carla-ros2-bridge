@@ -2,7 +2,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
 from rclpy.executors import SingleThreadedExecutor
 from sensor_msgs.msg import Image
-from custom_interfaces.msg import VehicleControl
+from carla_ros_interfaces.msg import VehicleControl
 from .carla_connector import CarlaConnector
 from cv_bridge import CvBridge
 from typing import Any

@@ -26,7 +26,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     privileged: true
     networks:
-      - carla_net
+      - shared_network
 
   # foxglove to visualize live data 
   foxglove_bridge:
@@ -40,11 +40,10 @@ services:
     ports: 
       - 8765:8765
     networks:
-      - carla_net
+      - shared_network
     depends_on:
       carla_server:
         condition: service_started
-    
 
   # Carla ROS bridge container
   custom_carla_bridge:
@@ -55,30 +54,14 @@ services:
     container_name: custom-carla-bridge
     command: /bin/sh -c "sleep 15 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town07"
     networks:
-      - carla_net
+      - shared_network
     depends_on:
       carla_server:
         condition: service_started
       foxglove_bridge:
         condition: service_started
 
-  # ROS2 data collector container
-#  data_collector:
-#    build:
-#      context: .
-#      dockerfile: ./docker/data_collector/Dockerfile
-#    image: data-collector-node:latest
-#    container_name: data-collector-node
-#    command: /bin/sh -c "sleep 15 && ros2 launch data_collector data_collector.launch.py"
-#    volumes:
-#      - ./data:/data
-#    networks:
-#      - carla_net
-#    depends_on:
-#      carla_server:
-#        condition: service_started
-#      custom_carla_bridge:
-#        condition: service_started
-
 networks:
-  carla_net:
+  shared_network:
+    name: tfm_ros_net
+    driver: bridge

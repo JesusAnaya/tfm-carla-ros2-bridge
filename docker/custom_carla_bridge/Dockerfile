@@ -23,7 +23,12 @@ RUN pip install --upgrade pip
 
 RUN pip install carla==0.9.14 pydantic opencv-python
 
-COPY . .
+COPY ./src/carla_ros_interfaces /ros2_ws/src/carla_ros_interfaces
+COPY ./src/custom_carla_bridge /ros2_ws/src/custom_carla_bridge
+
+RUN . /opt/ros/foxy/setup.sh && \
+    colcon build --packages-select carla_ros_interfaces custom_carla_bridge && \
+    rm -rf /ros2_ws/build /ros2_ws/log
 
 # Install carla bridge
 COPY ./docker/custom_carla_bridge/entrypoint.sh /entrypoint-carla-bridge.sh
