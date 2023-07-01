@@ -9,7 +9,13 @@ services:
     image: carla-server:0.9.14
     container_name: carla_server
     command: ["bash", "./CarlaUE4.sh", "-vulkan", "-nosound", "-RenderOffScreen", "-fps=30"]
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: [ '1' ]
+              capabilities: [ gpu ]
     environment:
       - DISPLAY=${DISPLAY}
       - NVIDIA_VISIBLE_DEVICES=all
@@ -48,12 +54,12 @@ services:
     image: custom-carla-bridge:latest
     container_name: custom-carla-bridge
     command: /bin/sh -c "sleep 15 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town07"
-    volumes:
-      - ./:/ros2_ws
     networks:
       - carla_net
     depends_on:
       carla_server:
+        condition: service_started
+      foxglove_bridge:
         condition: service_started
 
   # ROS2 data collector container
@@ -74,28 +80,5 @@ services:
 #      custom_carla_bridge:
 #        condition: service_started
 
-  vehicle_inference:
-    build:
-      context: .
-      dockerfile: ./docker/vehicle_inference/Dockerfile
-    image: vehicle-inference-node:latest
-    container_name: vehicle-inference-node
-    command: /bin/sh -c "sleep 15 && ros2 launch vehicle_inference vehicle_inference.launch.py"
-    volumes:
-      - ./models:/models
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    networks:
-      - carla_net
-    runtime: nvidia
-    privileged: true
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
-    depends_on:
-      carla_server:
-        condition: service_started
-      custom_carla_bridge:
-        condition: service_started
-        
 networks:
   carla_net:
