@@ -10,6 +10,7 @@ import rclpy
 import carla
 import signal
 import numpy as np
+import cv2
 
 
 # Create a QoS profile with "best effort" reliability
@@ -27,6 +28,9 @@ def process_image(carla_image: carla.Image, publisher: Any) -> None:
         (carla_image.height, carla_image.width, 4)
     )
     image_rgb = image_bgra[:, :, :3][:, :, ::-1]
+
+    # resize image with opencv
+    image_rgb = cv2.resize(image_rgb, (320, 160))
 
     # Convert the OpenCV image to a ROS Image message
     image_msg = cv_bridge.cv2_to_imgmsg(image_rgb, encoding="rgb8")

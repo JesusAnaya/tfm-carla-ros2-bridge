@@ -52,7 +52,7 @@ services:
       dockerfile: ./docker/custom_carla_bridge/Dockerfile
     image: custom-carla-bridge:latest
     container_name: custom-carla-bridge
-    command: /bin/sh -c "sleep 15 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town07"
+    command: /bin/sh -c "sleep 12 && ros2 launch custom_carla_bridge carla_ros_node.launch.py host:=carla_server town:=Town07"
     networks:
       - shared_network
     depends_on:
