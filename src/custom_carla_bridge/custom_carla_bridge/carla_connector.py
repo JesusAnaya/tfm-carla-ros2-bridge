@@ -1,5 +1,6 @@
 import carla
 import random
+import math
 from typing import Union, Any, Callable
 
 
@@ -73,13 +74,9 @@ class CarlaConnector(object):
         camera_bp.set_attribute("fov", "90")
 
         # Get Vehicle Physics Control
-        physics_control = self.ego_vehicle.get_physics_control()
+        # physics_control = self.ego_vehicle.get_physics_control()
         # Get the maximum steer angle of the front wheels
-        max_steer_angle = physics_control.wheels[0].max_steer_angle
-
-        # Calculate the steering angle for the cameras
-        left_camera_angle = -max_steer_angle * self.camera_deviation
-        right_camera_angle = max_steer_angle * self.camera_deviation
+        # max_steer_angle = physics_control.wheels[0].max_steer_angle
 
         # Set cameras to the center, left, and right of the vehicle
         self.camera_center = self.set_camera(
@@ -87,15 +84,11 @@ class CarlaConnector(object):
         )
         self.camera_right = self.set_camera(
             camera_bp,
-            carla.Transform(
-                carla.Location(x=2.5, z=1.2), carla.Rotation(yaw=right_camera_angle)
-            ),
+            carla.Transform(carla.Location(x=2.5, y=0.5, z=1.2))  # y=-0.5 for right side
         )
         self.camera_left = self.set_camera(
             camera_bp,
-            carla.Transform(
-                carla.Location(x=2.5, z=1.2), carla.Rotation(yaw=left_camera_angle)
-            ),
+            carla.Transform(carla.Location(x=2.5, y=-0.5, z=1.2))  # y=0.5 for left side
         )
 
     def set_camera(
@@ -120,6 +113,13 @@ class CarlaConnector(object):
 
     def set_vehicle_control(self, control: carla.VehicleControl) -> None:
         self.ego_vehicle.apply_control(control)
+
+    def get_ego_vehicle_info(self) -> dict:
+        velocity_s = self.ego_vehicle.get_velocity()
+        velocity = 3.6 * math.sqrt(velocity_s.x ** 2 + velocity_s.y ** 2 + velocity_s.z ** 2)
+        return {
+            "velocity": velocity,
+        }
 
     def cleanup(self) -> None:
         # Cleanup the Carla ROS node

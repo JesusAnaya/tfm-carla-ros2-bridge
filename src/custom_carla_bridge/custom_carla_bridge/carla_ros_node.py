@@ -2,7 +2,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy
 from rclpy.executors import SingleThreadedExecutor
 from sensor_msgs.msg import Image
-from carla_ros_interfaces.msg import VehicleControl
+from carla_ros_interfaces.msg import VehicleControl, VehicleInfo
 from .carla_connector import CarlaConnector
 from cv_bridge import CvBridge
 from typing import Any
@@ -46,6 +46,7 @@ class CarlaROSNode(Node):
         self.camera_left_publisher: Any = None
         self.camera_center_publisher: Any = None
         self.vehicle_control_sub: Any = None
+        self.ego_vehicle_info_publisher: Any = None
 
         self.declare_parameter("host", "localhost")
         self.declare_parameter("town", "Town01_Opt")
@@ -76,27 +77,40 @@ class CarlaROSNode(Node):
         # desired simulation rate in seconds (e.g., 0.05 s for 20 Hz)
         self.timer_period: float = 0.05
         self.timer: Any = self.create_timer(
-            self.timer_period, self.carla_connector.timer_callback
+            self.timer_period, self.timer_callback
         )
         self.get_logger().info("Node ROS Bridge to Carla started...")
 
     def set_publishers(self):
         self.camera_center_publisher = self.create_publisher(
-            Image, "carla/vehicle/camera_center", qos_profile
+            Image, "carla_bridge/ego/camera_center", qos_profile
         )
 
         self.camera_left_publisher = self.create_publisher(
-            Image, "carla/vehicle/camera_left", qos_profile
+            Image, "carla_bridge/ego/camera_left", qos_profile
         )
 
         self.camera_right_publisher = self.create_publisher(
-            Image, "carla/vehicle/camera_right", qos_profile
+            Image, "carla_bridge/ego/camera_right", qos_profile
+        )
+
+        self.ego_vehicle_info_publisher = self.create_publisher(
+            VehicleInfo, "carla_bridge/ego/vehicle_info", 10
         )
 
     def set_subscribers(self):
         self.vehicle_control_sub = self.create_subscription(
-            VehicleControl, "/carla/vehicle/control", self.vehicle_control_callback, 10
+            VehicleControl, "/carla_bridge/ego/control", self.vehicle_control_callback, 10
         )
+
+    def timer_callback(self) -> None:
+        self.carla_connector.timer_callback()
+        info = self.carla_connector.get_ego_vehicle_info()
+
+        # Publish vehicle info
+        vehicle_info: VehicleInfo = VehicleInfo()
+        vehicle_info.velocity = float(info["velocity"])
+        self.ego_vehicle_info_publisher.publish(vehicle_info)
 
     def camera_center_callback(self, image: carla.Image) -> None:
         process_image(image, self.camera_center_publisher)
