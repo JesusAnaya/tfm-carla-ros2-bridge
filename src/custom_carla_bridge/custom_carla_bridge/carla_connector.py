@@ -49,10 +49,11 @@ class CarlaConnector(object):
         weather = self.world.get_weather()
 
         # Set the desired parameters
-        weather.cloudiness = 0.0
+        weather.cloudiness = 70.0
         weather.precipitation = 0.0
+        weather.precipitation_deposits = 30.0
         weather.fog_density = 0.0
-        weather.sun_altitude_angle = 10.0
+        weather.sun_altitude_angle = 30.0
 
         # Apply the new weather parameters
         self.world.set_weather(weather)
@@ -69,8 +70,8 @@ class CarlaConnector(object):
     def init_cameras(self, blueprint_library: Any) -> None:
         # Attach an RGB camera to the Tesla
         camera_bp = blueprint_library.find("sensor.camera.rgb")
-        camera_bp.set_attribute("image_size_x", "640")
-        camera_bp.set_attribute("image_size_y", "320")
+        camera_bp.set_attribute("image_size_x", "960")
+        camera_bp.set_attribute("image_size_y", "480")
         camera_bp.set_attribute("fov", "90")
 
         # Get Vehicle Physics Control

@@ -30,7 +30,7 @@ def process_image(carla_image: carla.Image, publisher: Any) -> None:
     image_rgb = image_bgra[:, :, :3][:, :, ::-1]
 
     # resize image with opencv
-    image_rgb = cv2.resize(image_rgb, (320, 160))
+    image_rgb = cv2.resize(image_rgb, (320, 160), interpolation=cv2.INTER_CUBIC)
 
     # Convert the OpenCV image to a ROS Image message
     image_msg = cv_bridge.cv2_to_imgmsg(image_rgb, encoding="rgb8")
