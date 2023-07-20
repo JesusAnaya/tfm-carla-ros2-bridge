@@ -9,13 +9,8 @@ services:
     image: carla-server:0.9.14
     container_name: carla_server
     command: ["bash", "./CarlaUE4.sh", "-vulkan", "-nosound", "-RenderOffScreen", "-fps=30"]
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: [ '1' ]
-              capabilities: [ gpu ]
+    runtime: nvidia
+    privileged: true
     environment:
       - DISPLAY=${DISPLAY}
       - NVIDIA_VISIBLE_DEVICES=all
@@ -24,7 +19,6 @@ services:
       - SDL_VIDEODRIVER=x11
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-    privileged: true
     networks:
       - shared_network
 
